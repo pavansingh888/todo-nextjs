@@ -224,35 +224,6 @@ export default function DashboardPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                {/* New navigation buttons: Home & Profile */}
-                <Link
-                  href="/"
-                  className="px-3 py-1 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700"
-                  title="Home"
-                >
-                  Home
-                </Link>
-
-                <Link
-                  href="/profile"
-                  className="px-3 py-1 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700"
-                  title="Profile"
-                >
-                  Profile
-                </Link>
-
-                <ThemeToggle />
-
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 rounded-lg border border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-700 hover:bg-slate-50 transition-colors text-sm font-medium"
-                  title="Logout"
-                  aria-label="Logout"
-                >
-                  Logout
-                </button>
-              </div>
             </div>
 
             {/* Stats */}
