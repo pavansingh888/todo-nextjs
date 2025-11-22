@@ -10,13 +10,14 @@ export default function useInactivity() {
   const setCountdown = useUIStore((s) => s.setCountdown);
   const closeModal = useUIStore((s) => s.closeModal);
   const isModalOpen = useUIStore((s) => s.isModalOpen);
+  const staySignedIn = useUIStore((s) => s.staySignedIn);
 
   const router = useRouter();
   const pathname = usePathname();
 
   const idleTimer = useRef<number | null>(null);
   const countdownTimer = useRef<number | null>(null);
-  const isLoggingOut = useRef(false); // Prevent multiple logout calls
+  const isLoggingOut = useRef(false);
   const modalSeconds = 60;
 
   const clearTimers = useCallback(() => {
@@ -44,12 +45,13 @@ export default function useInactivity() {
     }
 
     if (pathname !== "/login") {
-      // navigate after logout
       router.push("/login");
     }
   }, [clearTimers, closeModal, router, pathname]);
 
   const startIdleTimer = useCallback(() => {
+    // if user opted to stay signed in, don't start timers
+    if (staySignedIn) return;
     clearTimers();
     idleTimer.current = window.setTimeout(() => {
       openModal(modalSeconds);
@@ -65,13 +67,18 @@ export default function useInactivity() {
         }
       }, 1000);
     }, timeoutMinutes * 60 * 1000);
-  }, [clearTimers, openModal, timeoutMinutes, logout, setCountdown]);
+  }, [clearTimers, openModal, timeoutMinutes, logout, setCountdown, staySignedIn]);
 
   const resetTimer = useCallback(() => {
-    // Reset timers and close modal (if any)
+    if (staySignedIn) {
+      // if staySignedIn, do not start timers
+      clearTimers();
+      closeModal();
+      return;
+    }
     startIdleTimer();
     closeModal();
-  }, [startIdleTimer, closeModal]);
+  }, [startIdleTimer, closeModal, staySignedIn, clearTimers]);
 
   useEffect(() => {
     const handleReset = () => resetTimer();
@@ -81,13 +88,10 @@ export default function useInactivity() {
       }
     };
 
-    // When modal is open we intentionally ignore global activity events
-    // so clicks inside modal don't close it. Overlay has its own handler.
     const activityHandler = (_e: Event) => {
-      if (isModalOpen) {
-        return; // ignore all global activity while modal is open
-      }
-      // When modal is closed, any activity resets timer
+      if (isModalOpen) return;
+      // if user opted to stay signed in, do nothing
+      if (staySignedIn) return;
       resetTimer();
     };
 
@@ -98,6 +102,7 @@ export default function useInactivity() {
 
     events.forEach((ev) => window.addEventListener(ev, activityHandler));
 
+    // start timers (if not staySignedIn)
     startIdleTimer();
 
     return () => {
@@ -106,7 +111,20 @@ export default function useInactivity() {
       events.forEach((ev) => window.removeEventListener(ev, activityHandler));
       clearTimers();
     };
-  }, [resetTimer, startIdleTimer, logout, clearTimers, isModalOpen]);
+  }, [resetTimer, startIdleTimer, logout, clearTimers, isModalOpen, staySignedIn]);
+
+  // Also watch for changes in staySignedIn or timeoutMinutes:
+  useEffect(() => {
+    if (staySignedIn) {
+      // disable timers immediately
+      clearTimers();
+      closeModal();
+    } else {
+      // re-start timers with current timeoutMinutes
+      startIdleTimer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staySignedIn, timeoutMinutes]);
 
   return { resetTimer, logout, startIdleTimer };
 }

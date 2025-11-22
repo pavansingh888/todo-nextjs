@@ -1,7 +1,26 @@
 // /Users/pavan/Desktop/todo-nextjs/app/page.tsx
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "../stores/authStore";
+import { logoutLocal } from "../hooks/useAuth";
 
 export default function LandingPage() {
+  const user = useAuthStore((s) => s.user);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logoutLocal();
+      // redirect to landing after logout
+      router.push("/");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      router.push("/login");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 antialiased">
       <section className="relative overflow-hidden">
@@ -19,12 +38,33 @@ export default function LandingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Link href="/login" className="hidden sm:inline-block px-4 py-2 rounded-md text-sm font-medium border border-transparent bg-slate-900 text-white hover:opacity-95">
-                Login
-              </Link>
-              <Link href="/dashboard" className="px-4 py-2 rounded-md text-sm font-medium border border-slate-200 hover:bg-slate-100">
-                Dashboard
-              </Link>
+              {!user ? (
+                <>
+                  <Link href="/login" className="hidden sm:inline-block px-4 py-2 rounded-md text-sm font-medium border border-transparent bg-slate-900 text-white hover:opacity-95">
+                    Login
+                  </Link>
+                  <Link href="/dashboard" className="px-4 py-2 rounded-md text-sm font-medium border border-slate-200 hover:bg-slate-100">
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/profile" className="px-3 py-1 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50">
+                    Profile
+                  </Link>
+                  <Link href="/dashboard" className="px-3 py-1 rounded text-sm font-medium border border-slate-200 hover:bg-slate-50">
+                    Dashboard
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1 rounded-md text-sm font-medium border border-transparent bg-slate-900 text-white hover:opacity-95"
+                    title="Logout"
+                  >
+                    Logout
+                  </button>
+                </>
+              )}
             </div>
           </nav>
 
@@ -34,24 +74,51 @@ export default function LandingPage() {
               <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight tracking-tight">
                 Beautifully simple task management, built for clarity.
               </h1>
-              <p className="mt-6 text-lg text-slate-600 max-w-2xl">
-                Sign up quickly, create tasks, and stay focused. Automatic session timeout keeps your account secure — configurable from your profile.
-              </p>
+
+              {user ? (
+                <p className="mt-4 text-lg text-slate-600 max-w-2xl">
+                  Welcome back, <span className="font-semibold">{user.username}</span> — your tasks are waiting. Go to your dashboard to continue.
+                </p>
+              ) : (
+                <p className="mt-6 text-lg text-slate-600 max-w-2xl">
+                  Sign up quickly, create tasks, and stay focused. Automatic session timeout keeps your account secure — configurable from your profile.
+                </p>
+              )}
 
               <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-slate-900 text-white text-sm font-medium hover:opacity-95"
-                >
-                  Get Started
-                </Link>
+                {!user ? (
+                  <>
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-slate-900 text-white text-sm font-medium hover:opacity-95"
+                    >
+                      Get Started
+                    </Link>
 
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-slate-200 text-sm font-medium hover:bg-slate-100"
-                >
-                  Explore Dashboard
-                </Link>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-slate-200 text-sm font-medium hover:bg-slate-100"
+                    >
+                      Explore Dashboard
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-md bg-slate-900 text-white text-sm font-medium hover:opacity-95"
+                    >
+                      Open Dashboard
+                    </Link>
+
+                    <Link
+                      href="/profile"
+                      className="inline-flex items-center gap-2 px-5 py-3 rounded-md border border-slate-200 text-sm font-medium hover:bg-slate-100"
+                    >
+                      Profile Settings
+                    </Link>
+                  </>
+                )}
               </div>
 
               <div className="mt-10 flex items-center gap-6">
