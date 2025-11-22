@@ -14,7 +14,14 @@ export default function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={qc}>
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
-      <Toaster position="top-right" richColors />
+      <Toaster
+        theme="system"
+        richColors
+        closeButton
+        position="top-center"
+        offset={80}        
+        duration={3000}
+      />
     </QueryClientProvider>
   );
 }
