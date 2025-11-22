@@ -5,8 +5,8 @@ import InactivityModal from "../components/InactivityModal";
 import Header from "../components/Header";
 
 export const metadata = {
-  title: "Todo App - Assignment",
-  description: "MERN-like TODO app using Next.js + React Query + Zustand",
+  title: "TaskFlow247",
+  description: "Secure Task Management App with 24/7 Inactivity Monitoring",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
