@@ -1,3 +1,10 @@
+/* /app/globals.css
+   Adjusted dark-mode tokens and softened contrast for a friendlier dark theme.
+   Keeps your original token structure (oklch) but provides sensible hex fallbacks
+   for environments / tools that don't fully support oklch, and tweaks key
+   token values in .dark to be less harsh.
+*/
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -43,80 +50,263 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* -----------------------------------------------------------
+   Base token set (light mode defaults)
+   Keep your OKLCH values but also provide hex fallbacks for robustness.
+   ----------------------------------------------------------- */
 :root {
   --radius: 0.625rem;
+
+  /* Light mode base */
   --background: oklch(1 0 0);
+  --background-fallback: #ffffff;
+
   --foreground: oklch(0.129 0.042 264.695);
+  --foreground-fallback: #0b1220;
+
   --card: oklch(1 0 0);
+  --card-fallback: #ffffff;
+
   --card-foreground: oklch(0.129 0.042 264.695);
+  --card-foreground-fallback: #0b1220;
+
   --popover: oklch(1 0 0);
+  --popover-fallback: #ffffff;
+
   --popover-foreground: oklch(0.129 0.042 264.695);
+  --popover-foreground-fallback: #0b1220;
+
   --primary: oklch(0.208 0.042 265.755);
+  --primary-fallback: #1f3aa6;
+
   --primary-foreground: oklch(0.984 0.003 247.858);
+  --primary-foreground-fallback: #ffffff;
+
   --secondary: oklch(0.968 0.007 247.896);
+  --secondary-fallback: #f3f5f9;
+
   --secondary-foreground: oklch(0.208 0.042 265.755);
+  --secondary-foreground-fallback: #1f3aa6;
+
   --muted: oklch(0.968 0.007 247.896);
+  --muted-fallback: #f6f7f9;
+
   --muted-foreground: oklch(0.554 0.046 257.417);
+  --muted-foreground-fallback: #6b7280;
+
   --accent: oklch(0.968 0.007 247.896);
+  --accent-fallback: #f3f5f9;
+
   --accent-foreground: oklch(0.208 0.042 265.755);
+  --accent-foreground-fallback: #1f3aa6;
+
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-fallback: #d64937;
+
   --border: oklch(0.929 0.013 255.508);
+  --border-fallback: #e6e9ef;
+
   --input: oklch(0.929 0.013 255.508);
+  --input-fallback: #f7f8fb;
+
   --ring: oklch(0.704 0.04 256.788);
+  --ring-fallback: #cbd5ff;
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+
   --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-fallback: #ffffff;
+
   --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-foreground-fallback: #0b1220;
+
   --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-fallback: #1f3aa6;
+
   --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary-foreground-fallback: #ffffff;
+
   --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-fallback: #f3f5f9;
+
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-accent-foreground-fallback: #1f3aa6;
+
   --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-border-fallback: #e6e9ef;
+
   --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar-ring-fallback: #cbd5ff;
 }
 
+/* -----------------------------------------------------------
+   Dark mode token overrides — softened and more subtle
+   I provide both oklch and hex fallback for reliability.
+   ----------------------------------------------------------- */
 .dark {
+  /* background: slightly softened (not pure black) */
   --background: oklch(0.129 0.042 264.695);
+  --background-fallback: #0f1724; /* softer than pure black */
+
+  /* main text color: softer off-white for better readability */
   --foreground: oklch(0.984 0.003 247.858);
+  --foreground-fallback: #e6eef8;
+
+  /* card bg: dark slate rather than black */
   --card: oklch(0.208 0.042 265.755);
+  --card-fallback: #0f1724;
+
   --card-foreground: oklch(0.984 0.003 247.858);
+  --card-foreground-fallback: #e6eef8;
+
+  /* popovers lightly elevated */
   --popover: oklch(0.208 0.042 265.755);
+  --popover-fallback: #111827;
+
   --popover-foreground: oklch(0.984 0.003 247.858);
+  --popover-foreground-fallback: #e6eef8;
+
+  /* primary / accents : slightly desaturated to avoid glare */
   --primary: oklch(0.929 0.013 255.508);
+  --primary-fallback: #1e40af;
+
   --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary-foreground-fallback: #c7d2fe;
+
   --secondary: oklch(0.279 0.041 260.031);
+  --secondary-fallback: #111827;
+
   --secondary-foreground: oklch(0.984 0.003 247.858);
+  --secondary-foreground-fallback: #e6eef8;
+
   --muted: oklch(0.279 0.041 260.031);
+  --muted-fallback: #111827;
+
   --muted-foreground: oklch(0.704 0.04 256.788);
+  --muted-foreground-fallback: #9aa7c7;
+
   --accent: oklch(0.279 0.041 260.031);
+  --accent-fallback: #0b1220;
+
   --accent-foreground: oklch(0.984 0.003 247.858);
+  --accent-foreground-fallback: #e6eef8;
+
+  /* destructive action color */
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-fallback: #f87171;
+
+  /* borders in dark mode: subtle translucent */
   --border: oklch(1 0 0 / 10%);
+  --border-fallback: rgba(255,255,255,0.06);
+
+  /* input backgrounds: slightly lighter than surface for contrast */
   --input: oklch(1 0 0 / 15%);
+  --input-fallback: rgba(255,255,255,0.03);
+
+  /* focus ring */
   --ring: oklch(0.551 0.027 264.364);
+  --ring-fallback: #94a3ff;
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
   --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-fallback: #0b1220;
+
   --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-foreground-fallback: #e6eef8;
+
   --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-fallback: #111827;
+
   --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary-foreground-fallback: #e6eef8;
+
   --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-fallback: #0b1220;
+
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent-foreground-fallback: #e6eef8;
+
   --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border-fallback: rgba(255,255,255,0.06);
+
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-ring-fallback: #94a3ff;
 }
 
+/* -----------------------------------------------------------
+   Base layer: use tokens and fallbacks sensibly
+   - body uses fallback if oklch isn't recognized
+   - borders and inputs use subtle translucency in dark mode
+   ----------------------------------------------------------- */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* default apply border color and focus ring using tokens */
+    outline-color: var(--ring-fallback);
+    border-color: var(--border-fallback);
   }
+
   body {
-    @apply bg-background text-foreground;
+    /* use oklch token when supported; otherwise fallback hex */
+    background-color: var(--background, var(--background-fallback));
+    color: var(--foreground, var(--foreground-fallback));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  /* cards / popovers */
+  .card,
+  .popover {
+    background-color: var(--card, var(--card-fallback));
+    color: var(--card-foreground, var(--card-foreground-fallback));
+  }
+
+  /* inputs */
+  input,
+  textarea,
+  select {
+    background-color: var(--input, var(--input-fallback));
+    color: var(--foreground, var(--foreground-fallback));
+    border-color: var(--border, var(--border-fallback));
+  }
+
+  /* buttons that rely on primary color */
+  .btn-primary {
+    background-color: var(--primary, var(--primary-fallback));
+    color: var(--primary-foreground, var(--primary-foreground-fallback));
+  }
+
+  /* subtle adjusted text colors in dark mode */
+  .dark body,
+  .dark .card,
+  .dark input,
+  .dark textarea,
+  .dark select {
+    color: var(--foreground, var(--foreground-fallback));
+  }
+
+  /* helper: badges with good contrast in dark mode */
+  .badge {
+    background-color: var(--accent, var(--accent-fallback));
+    color: var(--accent-foreground, var(--accent-foreground-fallback));
+  }
+
+  /* reduce harsh focus outlines */
+  :focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring-fallback) 16%, transparent);
+  }
+}
+
+/* Tiny utility override: make sure dark class yields softer body bg if someone forgot to set .dark on html */
+html.dark body {
+  background-color: var(--background-fallback);
+  color: var(--foreground-fallback);
 }
