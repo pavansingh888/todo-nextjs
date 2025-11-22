@@ -15,7 +15,7 @@ type UIState = {
 export const useUIStore = create<UIState>((set) => ({
   isModalOpen: false,
   countdown: 60,
-  timeoutMinutes: 10,
+  timeoutMinutes: 1,
   staySignedIn: false,
   openModal: (seconds = 60) => set({ isModalOpen: true, countdown: seconds }),
   closeModal: () => set({ isModalOpen: false }),
