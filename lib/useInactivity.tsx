@@ -1,23 +1,35 @@
+// /lib/useInactivity.ts  (or your hooks folder)
 "use client";
-import { useEffect, useRef, useCallback } from "react";
-import { useUIStore } from "../stores/uiStore";
+import { useCallback, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useUIStore } from "../stores/uiStore";
 import { logoutLocal } from "@/hooks/useAuth";
 
-export default function useInactivity() {
-  const timeoutMinutes = useUIStore((s) => s.timeoutMinutes);
-  const openModal = useUIStore((s) => s.openModal);
-  const setCountdown = useUIStore((s) => s.setCountdown);
-  const closeModal = useUIStore((s) => s.closeModal);
-  const isModalOpen = useUIStore((s) => s.isModalOpen);
-  const staySignedIn = useUIStore((s) => s.staySignedIn);
+/**
+ * Robust inactivity hook:
+ * - reads/writes countdown via Zustand store (so UI always sees exact value)
+ * - uses getState() to avoid stale closure values
+ * - clears timers reliably
+ */
 
+export default function useInactivity() {
   const router = useRouter();
   const pathname = usePathname();
+
+  const openModal = useUIStore((s) => s.openModal);
+  const closeModal = useUIStore((s) => s.closeModal);
+  const setCountdown = useUIStore((s) => s.setCountdown);
+  const timeoutMinutes = useUIStore((s) => s.timeoutMinutes);
+  const staySignedIn = useUIStore((s) => s.staySignedIn);
+  const isModalOpen = useUIStore((s) => s.isModalOpen);
+
+  // access store state directly when needed to avoid stale closures
+  const uiGet = useCallback(() => useUIStore.getState(), []);
 
   const idleTimer = useRef<number | null>(null);
   const countdownTimer = useRef<number | null>(null);
   const isLoggingOut = useRef(false);
+
   const modalSeconds = 60;
 
   const clearTimers = useCallback(() => {
@@ -31,7 +43,7 @@ export default function useInactivity() {
     }
   }, []);
 
-  const logout = useCallback(async () => {
+  const performLogout = useCallback(async () => {
     if (isLoggingOut.current) return;
     isLoggingOut.current = true;
 
@@ -49,60 +61,84 @@ export default function useInactivity() {
     }
   }, [clearTimers, closeModal, router, pathname]);
 
+  const startCountdownInterval = useCallback(() => {
+    // ensure any previous countdown is cleared
+    if (countdownTimer.current) {
+      window.clearInterval(countdownTimer.current);
+      countdownTimer.current = null;
+    }
+
+    // Start interval which reads latest store value each tick
+    countdownTimer.current = window.setInterval(() => {
+      const cur = uiGet().countdown;
+      const next = cur - 1;
+      if (next <= 0) {
+        // finalize
+        setCountdown(0);
+        clearTimers();
+        performLogout();
+      } else {
+        setCountdown(next);
+      }
+    }, 1000);
+  }, [clearTimers, performLogout, setCountdown, uiGet]);
+
+  const openCountdownModal = useCallback(() => {
+    // open modal and set initial countdown explicitly from store
+    openModal(modalSeconds);
+    setCountdown(modalSeconds);
+    // ensure interval starts after modal opens
+    startCountdownInterval();
+  }, [openModal, setCountdown, startCountdownInterval]);
+
   const startIdleTimer = useCallback(() => {
-    // if user opted to stay signed in, don't start timers
+    // if user wants to stay signed in, do nothing
     if (staySignedIn) return;
     clearTimers();
-    idleTimer.current = window.setTimeout(() => {
-      openModal(modalSeconds);
-      let secondsLeft = modalSeconds;
-      setCountdown(secondsLeft);
 
-      countdownTimer.current = window.setInterval(() => {
-        secondsLeft -= 1;
-        setCountdown(secondsLeft);
-        if (secondsLeft <= 0) {
-          clearTimers();
-          logout();
-        }
-      }, 1000);
-    }, timeoutMinutes * 60 * 1000);
-  }, [clearTimers, openModal, timeoutMinutes, logout, setCountdown, staySignedIn]);
+    // convert minutes to ms (ensure numeric)
+    const ms = Math.max(0, Number(timeoutMinutes) || 0) * 60 * 1000;
+
+    // Use setTimeout to open the modal after idle timeout
+    idleTimer.current = window.setTimeout(() => {
+      openCountdownModal();
+    }, ms);
+  }, [clearTimers, openCountdownModal, timeoutMinutes, staySignedIn]);
 
   const resetTimer = useCallback(() => {
-    if (staySignedIn) {
-      // if staySignedIn, do not start timers
+    // if staySignedIn, cancel everything
+    if (uiGet().staySignedIn) {
       clearTimers();
       closeModal();
       return;
     }
-    startIdleTimer();
+    clearTimers();
     closeModal();
-  }, [startIdleTimer, closeModal, staySignedIn, clearTimers]);
+    startIdleTimer();
+  }, [clearTimers, closeModal, startIdleTimer, uiGet]);
 
   useEffect(() => {
     const handleReset = () => resetTimer();
     const handleForceLogout = () => {
-      if (!isLoggingOut.current) {
-        logout();
-      }
+      if (!isLoggingOut.current) performLogout();
     };
 
     const activityHandler = (_e: Event) => {
-      if (isModalOpen) return;
-      // if user opted to stay signed in, do nothing
-      if (staySignedIn) return;
+      // if modal open, ignore activity (modal has its own buttons)
+      if (uiGet().isModalOpen) return;
+      // ignore if stay signed in
+      if (uiGet().staySignedIn) return;
       resetTimer();
     };
 
-    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"] as const;
-
+    // bind events
     window.addEventListener("resetIdle", handleReset);
     window.addEventListener("forceLogout", handleForceLogout);
 
+    const events: Array<keyof WindowEventMap> = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"];
     events.forEach((ev) => window.addEventListener(ev, activityHandler));
 
-    // start timers (if not staySignedIn)
+    // initial start
     startIdleTimer();
 
     return () => {
@@ -111,20 +147,19 @@ export default function useInactivity() {
       events.forEach((ev) => window.removeEventListener(ev, activityHandler));
       clearTimers();
     };
-  }, [resetTimer, startIdleTimer, logout, clearTimers, isModalOpen, staySignedIn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetTimer, startIdleTimer, performLogout, clearTimers]);
 
-  // Also watch for changes in staySignedIn or timeoutMinutes:
+  // react to changes in staySignedIn or timeoutMinutes:
   useEffect(() => {
     if (staySignedIn) {
-      // disable timers immediately
       clearTimers();
       closeModal();
     } else {
-      // re-start timers with current timeoutMinutes
-      startIdleTimer();
+      // restart with new timeout value
+      resetTimer();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [staySignedIn, timeoutMinutes]);
+  }, [staySignedIn, timeoutMinutes, clearTimers, closeModal, resetTimer]);
 
-  return { resetTimer, logout, startIdleTimer };
+  return { resetTimer, performLogout, startIdleTimer };
 }
