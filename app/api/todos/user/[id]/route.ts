@@ -15,8 +15,6 @@ export async function GET(
     
     const originCookie = req.headers.get("cookie") ?? "";
     
-    console.log("Fetching todos for user ID:", userId);
-    
     const fetchRes = await fetch(
       `https://dummyjson.com/todos/user/${encodeURIComponent(userId)}`, 
       {
