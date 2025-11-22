@@ -1,4 +1,3 @@
-// /Users/pavan/Desktop/todo-nextjs/components/ThemeToggle.tsx
 "use client";
 
 import { useEffect, useState } from "react";

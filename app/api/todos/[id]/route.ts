@@ -1,3 +1,4 @@
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -9,7 +10,7 @@ export async function GET(
     const originCookie = req.headers.get("cookie") ?? "";
     
     const fetchRes = await fetch(
-      `https://dummyjson.com/todos/${encodeURIComponent(id)}`,
+      `${EXTERNAL_API_BASE}/todos/${encodeURIComponent(id)}`,
       {
         method: "GET",
         headers: {
@@ -48,7 +49,7 @@ export async function DELETE(
     const originCookie = req.headers.get("cookie") ?? "";
 
     const fetchRes = await fetch(
-      `https://dummyjson.com/todos/${encodeURIComponent(id)}`,
+      `${EXTERNAL_API_BASE}/todos/${encodeURIComponent(id)}`,
       {
         method: "DELETE",
         headers: {
@@ -89,7 +90,7 @@ export async function PUT(
     const bodyText = await req.text();
 
     const fetchRes = await fetch(
-      `https://dummyjson.com/todos/${encodeURIComponent(id)}`,
+      `${EXTERNAL_API_BASE}/todos/${encodeURIComponent(id)}`,
       {
         method: "PUT",
         headers: {
@@ -131,7 +132,7 @@ export async function PATCH(
     const bodyText = await req.text();
 
     const fetchRes = await fetch(
-      `https://dummyjson.com/todos/${encodeURIComponent(id)}`,
+      `${EXTERNAL_API_BASE}/todos/${encodeURIComponent(id)}`,
       {
         method: "PATCH",
         headers: {

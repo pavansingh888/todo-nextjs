@@ -1,4 +1,3 @@
-// /app/layout.tsx
 import "./globals.css";
 import { ReactNode } from "react";
 import Providers from "../components/Providers"; // adjust path if your Providers file differs

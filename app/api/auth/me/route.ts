@@ -1,4 +1,4 @@
-// /Users/pavan/Desktop/todo-nextjs/app/api/auth/me/route.ts
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 /**
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   try {
     const originCookie = req.headers.get("cookie") ?? "";
 
-    const fetchRes = await fetch("https://dummyjson.com/auth/me", {
+    const fetchRes = await fetch(EXTERNAL_API_BASE+"/auth/me", {
       method: "GET",
       headers: {
         // forward cookies from the browser

@@ -1,3 +1,4 @@
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 /**
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
     const originCookie = req.headers.get("cookie") ?? "";
     const bodyText = await req.text();
 
-    const fetchRes = await fetch("https://dummyjson.com/todos/add", {
+    const fetchRes = await fetch(EXTERNAL_API_BASE+"/todos/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

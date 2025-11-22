@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { EXTERNAL_API_BASE } from "@/lib/config";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const incomingCookie = req.headers.get("cookie") ?? "";
 
-    const fetchRes = await fetch("https://dummyjson.com/auth/login", {
+    const fetchRes = await fetch(EXTERNAL_API_BASE+"/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

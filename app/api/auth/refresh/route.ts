@@ -1,4 +1,4 @@
-// /Users/pavan/Desktop/todo-nextjs/app/api/auth/refresh/route.ts
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 /**
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     // pass along any JSON body if provided
     const bodyText = await req.text();
-    const fetchRes = await fetch("https://dummyjson.com/auth/refresh", {
+    const fetchRes = await fetch(EXTERNAL_API_BASE+"/auth/refresh", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

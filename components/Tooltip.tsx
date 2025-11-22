@@ -1,4 +1,3 @@
-// /Users/pavan/Desktop/todo-nextjs/components/Tooltip.tsx
 "use client";
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";

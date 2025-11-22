@@ -1,5 +1,3 @@
-//TS error - corrected - occured due to React Query v5 syntax changes
-
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useAuthStore, type User } from "../stores/authStore";
@@ -44,8 +42,6 @@ export async function logoutLocal(): Promise<void> {
     // Clear in-memory user state
     useAuthStore.getState().clearUser();
 
-    // Notify other subsystems (inactivity hook, modal, etc.)
-    window.dispatchEvent(new CustomEvent("forceLogout"));
   } catch (err) {
     // Even on error, clear client-side state to avoid showing protected UI
     useAuthStore.getState().clearUser();

@@ -1,3 +1,4 @@
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 /**
@@ -16,7 +17,7 @@ export async function GET(
     const originCookie = req.headers.get("cookie") ?? "";
     
     const fetchRes = await fetch(
-      `https://dummyjson.com/todos/user/${encodeURIComponent(userId)}`, 
+      `${EXTERNAL_API_BASE}/todos/user/${encodeURIComponent(userId)}`, 
       {
         method: "GET",
         headers: {

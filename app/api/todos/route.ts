@@ -1,4 +1,4 @@
-// /Users/pavan/Desktop/todo-nextjs/app/api/todos/route.ts
+import { EXTERNAL_API_BASE } from "@/lib/config";
 import { NextResponse } from "next/server";
 
 /**
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const qs = url.search; // includes leading "?" or empty string
 
-    const fetchUrl = `https://dummyjson.com/todos${qs}`;
+    const fetchUrl = `${EXTERNAL_API_BASE}/todos${qs}`;
 
     const fetchRes = await fetch(fetchUrl, {
       method: "GET",

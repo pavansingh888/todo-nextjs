@@ -1,6 +1,5 @@
-// /Users/pavan/Desktop/todo-nextjs/lib/axios.ts
 import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
-
+import { INTERNAL_API_BASE } from "./config";
 /**
  * Axios instance configured for HttpOnly cookie-based auth and proxying via Next.js API (/api).
  *
@@ -13,7 +12,6 @@ import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "
  */
 
 // Use Next.js internal API as the base
-const BASE = "/api";
 
 interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   // custom flag to avoid infinite retry loops
@@ -21,7 +19,7 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 }
 
 const api = axios.create({
-  baseURL: BASE,
+  baseURL: INTERNAL_API_BASE,
   withCredentials: true,
   timeout: 15000, // 15s
   headers: {

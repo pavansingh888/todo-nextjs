@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import ProtectedClient from "../../components/ProtectedClient";
 import {
   useTasks,
@@ -17,7 +16,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Check, X, Edit2, Trash2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import Tooltip from "../../components/Tooltip";
-import ThemeToggle from "../../components/ThemeToggle";
 import { AnimatePresence, motion } from "framer-motion";
 
 type FilterType = "all" | "pending" | "completed";

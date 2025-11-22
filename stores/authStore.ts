@@ -1,4 +1,3 @@
-// /Users/pavan/Desktop/todo-nextjs/stores/authStore.ts
 import {create} from "zustand";
 
 export type User = {
