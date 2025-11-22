@@ -2,15 +2,35 @@
 
 import ProtectedClient from "../../components/ProtectedClient";
 import useInactivity from "../../lib/useInactivity";
-import { useTasks, useCreateTask, useDeleteTask, useUpdateTask, type Todo } from "../../hooks/useTasks";
+import {
+  useTasks,
+  useCreateTask,
+  useDeleteTask,
+  useUpdateTask,
+  type Todo,
+} from "../../hooks/useTasks";
 import { useState } from "react";
 import { logoutLocal } from "../../hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../../stores/authStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, X, Edit2, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 type FilterType = "all" | "pending" | "completed";
+
+/**
+ * Small spinner component (keeps styling consistent)
+ */
+function TinySpinner({ size = 16 }: { size?: number }) {
+  return (
+    <span
+      style={{ width: size, height: size }}
+      className="inline-block animate-spin rounded-full border-[3px] border-slate-600 border-r-transparent"
+      aria-hidden
+    />
+  );
+}
 
 export default function DashboardPage() {
   useInactivity();
@@ -23,22 +43,43 @@ export default function DashboardPage() {
   const create = useCreateTask();
   const del = useDeleteTask();
   const update = useUpdateTask();
-  
+
+  // track per-item updating state
+  const [updatingIds, setUpdatingIds] = useState<number[]>([]);
+
   const [text, setText] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
+  const addUpdating = (id: number) => setUpdatingIds((s) => (s.includes(id) ? s : [...s, id]));
+  const removeUpdating = (id: number) => setUpdatingIds((s) => s.filter((x) => x !== id));
+  const isUpdating = (id: number) => updatingIds.includes(id);
+
   const onCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
-    create.mutate({ todo: text, completed: false });
+
+    // sonner: toast.loading returns an id-like value that can be passed to update the toast
+    const id = toast.loading("Adding task...");
+    create.mutate(
+      { todo: text, completed: false },
+      {
+        onSuccess: () => {
+          toast.success("Task added", { id });
+        },
+        onError: (err: any) => {
+          toast.error("Failed to add task", { id });
+          console.error("create error:", err);
+        },
+      }
+    );
+
     setText("");
   };
 
   const handleDelete = (todo: Todo) => {
     if (todo._isClientOnly) {
-
       const key = ["todos", user?.id ?? null];
       const prev = qc.getQueryData<any>(key);
       if (prev) {
@@ -49,10 +90,20 @@ export default function DashboardPage() {
         });
       }
       window.dispatchEvent(new CustomEvent("resetIdle"));
+      toast.success("Task removed (local)");
       return;
     }
-    
-    del.mutate(todo.id);
+
+    const id = toast.loading("Deleting task...");
+    del.mutate(todo.id, {
+      onSuccess: () => {
+        toast.success("Task deleted", { id });
+      },
+      onError: (err: any) => {
+        toast.error("Failed to delete task", { id });
+        console.error("delete error:", err);
+      },
+    });
   };
 
   const handleToggleComplete = (todo: Todo) => {
@@ -68,10 +119,29 @@ export default function DashboardPage() {
         });
       }
       window.dispatchEvent(new CustomEvent("resetIdle"));
+      toast.success(todo.completed ? "Marked pending (local)" : "Marked completed (local)");
       return;
     }
 
-    update.mutate({ id: todo.id, updates: { completed: !todo.completed } });
+    // show loading for this item
+    addUpdating(todo.id);
+    const id = toast.loading(todo.completed ? "Marking pending..." : "Marking completed...");
+
+    update.mutate(
+      { id: todo.id, updates: { completed: !todo.completed } },
+      {
+        onSuccess: () => {
+          toast.success(todo.completed ? "Marked pending" : "Marked completed", { id });
+        },
+        onError: (err: any) => {
+          toast.error("Failed to update", { id });
+          console.error("update error:", err);
+        },
+        onSettled: () => {
+          removeUpdating(todo.id);
+        },
+      }
+    );
   };
 
   const startEditing = (todo: Todo) => {
@@ -102,14 +172,28 @@ export default function DashboardPage() {
         });
       }
       window.dispatchEvent(new CustomEvent("resetIdle"));
+      toast.success("Updated (local)");
       cancelEditing();
       return;
     }
 
+    addUpdating(todo.id);
+    const id = toast.loading("Updating task...");
+
     update.mutate(
       { id: todo.id, updates: { todo: editText } },
       {
-        onSuccess: () => cancelEditing(),
+        onSuccess: () => {
+          toast.success("Task updated", { id });
+          cancelEditing();
+        },
+        onError: (err: any) => {
+          toast.error("Failed to update", { id });
+          console.error("update error:", err);
+        },
+        onSettled: () => {
+          removeUpdating(todo.id);
+        },
       }
     );
   };
@@ -117,6 +201,7 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await logoutLocal();
     router.push("/login");
+    toast.success("Logged out");
   };
 
   // Filter todos
@@ -151,6 +236,8 @@ export default function DashboardPage() {
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 transition-colors text-sm font-medium"
+                title="Logout"
+                aria-label="Logout"
               >
                 Logout
               </button>
@@ -181,11 +268,15 @@ export default function DashboardPage() {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="What needs to be done?"
                 className="flex-1 rounded-lg border border-slate-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent bg-white shadow-sm"
+                aria-label="New task"
+                title="Enter new task"
               />
               <button
                 type="submit"
                 className="px-6 py-3 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-colors font-medium shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={create.isPending}
+                title="Add task"
+                aria-label="Add task"
               >
                 <Plus size={20} />
                 {create.isPending ? "Adding..." : "Add Task"}
@@ -200,18 +291,14 @@ export default function DashboardPage() {
                 key={f}
                 onClick={() => setFilter(f)}
                 className={`flex-1 px-4 py-2 rounded-md font-medium text-sm transition-colors capitalize ${
-                  filter === f
-                    ? "bg-slate-800 text-white"
-                    : "text-slate-600 hover:bg-slate-50"
+                  filter === f ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-50"
                 }`}
+                title={`Show ${f} tasks`}
+                aria-label={`Show ${f} tasks`}
               >
                 {f}
-                {f === "pending" && stats.pending > 0 && (
-                  <span className="ml-2 text-xs">({stats.pending})</span>
-                )}
-                {f === "completed" && stats.completed > 0 && (
-                  <span className="ml-2 text-xs">({stats.completed})</span>
-                )}
+                {f === "pending" && stats.pending > 0 && <span className="ml-2 text-xs">({stats.pending})</span>}
+                {f === "completed" && stats.completed > 0 && <span className="ml-2 text-xs">({stats.completed})</span>}
               </button>
             ))}
           </div>
@@ -225,11 +312,7 @@ export default function DashboardPage() {
               </div>
             ) : filteredTodos.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
-                <p className="text-slate-500">
-                  {filter === "all"
-                    ? "No tasks yet. Create your first task above!"
-                    : `No ${filter} tasks.`}
-                </p>
+                <p className="text-slate-500">{filter === "all" ? "No tasks yet. Create your first task above!" : `No ${filter} tasks.`}</p>
               </div>
             ) : (
               <ul className="space-y-3">
@@ -237,9 +320,7 @@ export default function DashboardPage() {
                   <li
                     key={todo.id}
                     className={`bg-white rounded-lg shadow-sm border transition-all ${
-                      todo.completed
-                        ? "border-green-200 bg-green-50/50"
-                        : "border-slate-200 hover:shadow-md"
+                      todo.completed ? "border-green-200 bg-green-50/50" : "border-slate-200 hover:shadow-md"
                     }`}
                   >
                     <div className="p-4">
@@ -248,12 +329,17 @@ export default function DashboardPage() {
                         <button
                           onClick={() => handleToggleComplete(todo)}
                           className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                            todo.completed
-                              ? "bg-green-500 border-green-500"
-                              : "border-slate-300 hover:border-slate-400"
+                            todo.completed ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-slate-400"
                           }`}
+                          disabled={isUpdating(todo.id)}
+                          title={todo.completed ? "Mark as pending" : "Mark as complete"}
+                          aria-label={todo.completed ? "Mark as pending" : "Mark as complete"}
                         >
-                          {todo.completed && <Check size={16} className="text-white" />}
+                          {isUpdating(todo.id) ? (
+                            <TinySpinner size={12} />
+                          ) : (
+                            todo.completed && <Check size={14} className="text-white" />
+                          )}
                         </button>
 
                         {/* Content */}
@@ -270,45 +356,40 @@ export default function DashboardPage() {
                                 }}
                                 className="flex-1 px-3 py-1.5 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-800"
                                 autoFocus
+                                disabled={isUpdating(todo.id)}
+                                title="Edit task"
+                                aria-label="Edit task"
                               />
                               <button
                                 onClick={() => saveEdit(todo)}
-                                className="px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                                className="px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center"
+                                disabled={isUpdating(todo.id)}
+                                title={isUpdating(todo.id) ? "Updating..." : "Save"}
+                                aria-label="Save"
                               >
-                                <Check size={16} />
+                                {isUpdating(todo.id) ? <TinySpinner size={14} /> : <Check size={16} />}
                               </button>
                               <button
                                 onClick={cancelEditing}
                                 className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded-md hover:bg-slate-300 transition-colors"
+                                disabled={isUpdating(todo.id)}
+                                title="Cancel"
+                                aria-label="Cancel"
                               >
                                 <X size={16} />
                               </button>
                             </div>
                           ) : (
                             <>
-                              <p
-                                className={`font-medium ${
-                                  todo.completed
-                                    ? "line-through text-slate-500"
-                                    : "text-slate-900"
-                                }`}
-                              >
+                              <p className={`font-medium ${todo.completed ? "line-through text-slate-500" : "text-slate-900"}`}>
                                 {todo.todo}
                               </p>
                               <div className="flex items-center gap-2 mt-2">
-                                <span
-                                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                                    todo.completed
-                                      ? "bg-green-100 text-green-700"
-                                      : "bg-amber-100 text-amber-700"
-                                  }`}
-                                >
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${todo.completed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                                   {todo.completed ? "Completed" : "Pending"}
                                 </span>
                                 {todo._isClientOnly && (
-                                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">
-                                    Local Only
-                                  </span>
+                                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-700">Local Only</span>
                                 )}
                               </div>
                             </>
@@ -322,6 +403,8 @@ export default function DashboardPage() {
                               onClick={() => startEditing(todo)}
                               className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
                               title="Edit"
+                              aria-label="Edit task"
+                              disabled={isUpdating(todo.id)}
                             >
                               <Edit2 size={18} />
                             </button>
@@ -330,6 +413,7 @@ export default function DashboardPage() {
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
                               disabled={del.isPending}
                               title="Delete"
+                              aria-label="Delete task"
                             >
                               <Trash2 size={18} />
                             </button>
